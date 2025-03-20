@@ -13,8 +13,10 @@ void HttpSession::read_request() {
 }
 
 auto HttpSession::should_use_read_some() const -> bool {
-  auto content_length = http_request[boost::beast::http::field::content_length];
-  auto content_type = http_request[boost::beast::http::field::content_type];
+  auto content_length =
+      http_request.request[boost::beast::http::field::content_length];
+  auto content_type =
+      http_request.request[boost::beast::http::field::content_type];
 
   return (!content_length.empty() &&
           std::stoul(content_length) > READ_SOME_THRESHOLD) ||
@@ -25,7 +27,7 @@ auto HttpSession::should_use_read_some() const -> bool {
 
 auto HttpSession::read_request_full() -> void {
   auto self = shared_from_this();
-  http::async_read(tcp_socket, flat_buffer, http_request,
+  http::async_read(tcp_socket, flat_buffer, http_request.request,
                    beast::bind_front_handler(&HttpSession::on_read, self));
 }
 

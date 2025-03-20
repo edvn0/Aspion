@@ -21,14 +21,18 @@ int main(int argc, char **argv) {
                          std::thread::hardware_concurrency());
 
   std::cout << "Connection string: '{" << rabbitmq_connection_string << "}'\n";
+  boost::asio::io_context rabbit_mq_context;
+  std::shared_ptr<Messaging::RabbitMQ::Client> client;
 
   try {
-    boost::asio::io_context rabbit_mq_context;
+    auto work = boost::asio::make_work_guard(rabbit_mq_context);
 
-    Messaging::RabbitMQ::Client client{
-        rabbit_mq_context,
-        rabbitmq_connection_string,
-    };
+    std::jthread rabbit_thread(
+        [&rabbit_mq_context]() { rabbit_mq_context.run(); });
+
+    client = std::make_shared<Messaging::RabbitMQ::Client>(
+        rabbit_mq_context, rabbitmq_connection_string);
+    boost::asio::io_context rabbit_mq_context;
     boost::asio::io_context global_io_context;
     boost::asio::ip::tcp::acceptor acceptor(
         global_io_context,
@@ -41,9 +45,8 @@ int main(int argc, char **argv) {
     router.print_routes(out);
     std::cout << out.str() << "\n";
 
-    Session::accept_connections(client, acceptor, router);
-    std::jthread rabbit_mq_thread([&] { rabbit_mq_context.run(); });
-    
+    Session::accept_connections(*client, acceptor, router);
+
     std::vector<std::jthread> workers;
     for (int i = 0; i < num_threads; ++i) {
       workers.emplace_back([&io = global_io_context] { io.run(); });
@@ -51,6 +54,7 @@ int main(int argc, char **argv) {
   } catch (const std::exception &e) {
     std::cerr << "Server error: " << e.what() << "\n";
   }
+  std::cout << "[Aspion] Exiting\n";
 
   return 0;
 }

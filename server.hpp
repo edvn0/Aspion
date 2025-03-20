@@ -7,8 +7,8 @@
 
 class HomeController : public Controller::ControllerBase<HomeController> {
 public:
-  auto map_routes(Routing::Router &router,
-                  const std::string &controller_name) -> void override {
+  auto map_routes(Routing::Router &router, const std::string &controller_name)
+      -> void override {
     router.add_route(
         "/", [this](const Core::Request &req) { return home(req); },
         controller_name);
@@ -19,14 +19,15 @@ public:
 
   auto home(const Core::Request &req) -> Core::Response {
     return create_response<boost::beast::http::string_body>(
-        boost::beast::http::status::ok, "Welcome to the Home Page! Method: " +
-                                            std::string(req.method_string()));
+        boost::beast::http::status::ok,
+        "Welcome to the Home Page! Method: " +
+            std::string(req.request.method_string()));
   }
 
   auto about(const Core::Request &req) -> Core::Response {
     return create_response<boost::beast::http::string_body>(
         boost::beast::http::status::ok,
         "This is a C++ HTTP server. You requested: " +
-            std::string{req.target()});
+            std::string{req.request.target()});
   }
 };

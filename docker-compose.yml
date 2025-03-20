@@ -1,13 +1,16 @@
 services:
-  server:
+  aspion:
     build: .
-    container_name: cpp_server
+    container_name: aspion
     expose:
       - "8080"
     restart: always
     networks:
       - internal_net
     entrypoint: ["/app/Server", "--connection-string=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   rabbitmq:
     image: rabbitmq:3.11-management
@@ -20,6 +23,11 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
     networks:
       - internal_net
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   nginx:
     image: nginx:latest
