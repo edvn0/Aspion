@@ -4,3 +4,4 @@ venv
 build
 compile_commands.json
 .env
+CMakePresets.json
