@@ -4,3 +4,7 @@ build
 venv
 *.py
 result
+environments
+
+!conanfile.py
+!CMakePresets.json

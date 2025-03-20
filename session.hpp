@@ -2,7 +2,6 @@
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
-#include <iostream>
 #include <memory>
 #include <thread>
 #include <vector>
@@ -29,9 +28,8 @@ class HttpSession : public std::enable_shared_from_this<HttpSession> {
   Core::Response http_response;
   Messaging::IBusClient &client;
   Routing::Router &router;
-  static constexpr std::size_t READ_SOME_THRESHOLD = 8192; // 8KB threshold
-  static constexpr std::size_t READ_SOME_BUFFER_CHUNK_SIZE =
-      4096; // 4KB threshold
+  static constexpr std::size_t READ_SOME_THRESHOLD = 8192;
+  static constexpr std::size_t READ_SOME_BUFFER_CHUNK_SIZE = 4096;
 
 public:
   explicit HttpSession(Routing::Router &r, Messaging::IBusClient &c,

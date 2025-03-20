@@ -1,9 +1,11 @@
 #include "session.hpp"
 
+#include "log.hpp"
+
 namespace Session {
 
 void HttpSession::read_request() {
-  flat_buffer.consume(flat_buffer.size()); // Ensure buffer is empty
+  flat_buffer.consume(flat_buffer.size());
 
   if (should_use_read_some()) {
     read_request_some();
@@ -13,8 +15,10 @@ void HttpSession::read_request() {
 }
 
 auto HttpSession::should_use_read_some() const -> bool {
-  auto content_length = http_request[boost::beast::http::field::content_length];
-  auto content_type = http_request[boost::beast::http::field::content_type];
+  auto content_length =
+      http_request.request[boost::beast::http::field::content_length];
+  auto content_type =
+      http_request.request[boost::beast::http::field::content_type];
 
   return (!content_length.empty() &&
           std::stoul(content_length) > READ_SOME_THRESHOLD) ||
@@ -25,7 +29,7 @@ auto HttpSession::should_use_read_some() const -> bool {
 
 auto HttpSession::read_request_full() -> void {
   auto self = shared_from_this();
-  http::async_read(tcp_socket, flat_buffer, http_request,
+  http::async_read(tcp_socket, flat_buffer, http_request.request,
                    beast::bind_front_handler(&HttpSession::on_read, self));
 }
 
@@ -44,7 +48,7 @@ auto HttpSession::on_read(beast::error_code ec, std::size_t) -> void {
     close_connection();
     return;
   } else if (ec) {
-    std::cerr << "Read error: " << ec.message() << "\n";
+    Log::error("Read error: {}", ec.message());
     close_connection();
     return;
   }
@@ -59,7 +63,7 @@ auto HttpSession::on_read_some(beast::error_code ec,
     close_connection();
     return;
   } else if (ec) {
-    std::cerr << "Read error: " << ec.message() << "\n";
+    Log::error("Read error: {}", ec.message());
     close_connection();
     return;
   }
@@ -74,7 +78,7 @@ auto HttpSession::on_read_some(beast::error_code ec,
     read_request_some();
     return;
   } else if (parse_error) {
-    std::cerr << "HTTP parse error: " << parse_error.message() << "\n";
+    Log::error("HTTP parse error: {}", parse_error.message());
     close_connection();
     return;
   }

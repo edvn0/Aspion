@@ -19,14 +19,15 @@ public:
 
   auto home(const Core::Request &req) -> Core::Response {
     return create_response<boost::beast::http::string_body>(
-        boost::beast::http::status::ok, "Welcome to the Home Page! Method: " +
-                                            std::string(req.method_string()));
+        boost::beast::http::status::ok,
+        "Welcome to the Home Page! Method: " +
+            std::string(req.request.method_string()));
   }
 
   auto about(const Core::Request &req) -> Core::Response {
     return create_response<boost::beast::http::string_body>(
         boost::beast::http::status::ok,
         "This is a C++ HTTP server. You requested: " +
-            std::string{req.target()});
+            std::string{req.request.target()});
   }
 };

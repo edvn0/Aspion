@@ -3,12 +3,13 @@
 
 namespace Session {
 
-auto accept_connections(Messaging::IBusClient& client, tcp::acceptor &acceptor,
+auto accept_connections(Messaging::IBusClient &client, tcp::acceptor &acceptor,
                         Routing::Router &router) -> void {
-  acceptor.async_accept([&c = client, &acc = acceptor, &route = router](beast::error_code ec,
-                                                           tcp::socket socket) {
+  acceptor.async_accept([&c = client, &acc = acceptor, &route = router](
+                            beast::error_code ec, tcp::socket socket) {
     if (!ec) {
-      std::make_shared<Session::HttpSession>(route, c, std::move(socket))->start();
+      std::make_shared<Session::HttpSession>(route, c, std::move(socket))
+          ->start();
     }
     accept_connections(c, acc, route);
   });
@@ -21,27 +22,29 @@ auto HttpSession::close_connection() -> void {
 }
 
 auto HttpSession::process_request() -> void {
-  http_response = router.route_request(http_request.target(), http_request);
-  http_response.version(http_request.version());
-  http_response.set(http::field::connection,
-                    http_request.keep_alive() ? "keep-alive" : "close");
+  http_response =
+      router.route_request(http_request.request.target(), http_request);
+  http_response.response.version(http_request.request.version());
+  http_response.response.set(http::field::connection,
+                             http_request.request.keep_alive() ? "keep-alive"
+                                                               : "close");
 
-  http_response.prepare_payload();
+  http_response.response.prepare_payload();
 
   const auto trace_id = Util::generate_uuid();
   const auto span_id = Util::generate_uuid();
 
-  http_request.set("X-Trace-ID", trace_id);
-  http_response.set("X-Trace-ID", trace_id);
+  http_request.request.set("X-Trace-ID", trace_id);
+  http_response.response.set("X-Trace-ID", trace_id);
 
   // Publish request/response to RabbitMQ
-  Messaging::Message message {
-    .exchange = "logs_exchange",
-    .routing_key = "logs.routing.key",
-    .serialised_request = http_request.body(),
-    .serialised_response = http_response.body(),
-    .trace_id = trace_id,
-    .span_id =span_id,
+  Messaging::Message message{
+      .exchange = "logs_exchange",
+      .routing_key = "logs.info",
+      .serialised_request = http_request.request.body(),
+      .serialised_response = http_response.response.body(),
+      .trace_id = trace_id,
+      .span_id = span_id,
   };
   client.publish(message);
 

@@ -1,40 +1,57 @@
-FROM alpine:3.21.3 AS builder
+FROM debian:testing AS builder
 
-RUN apk add --no-cache \
-    boost-dev \
-    build-base \
+# Install basic build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
     cmake \
-    openssl-dev \
+    ninja-build \
     git \
-    g++ \
-    libstdc++
+    python3 \
+    python3-pip \
+    python3-venv \
+    libssl-dev \
+    libffi-dev
 
-RUN git clone --depth=1 https://github.com/CopernicaMarketingSoftware/AMQP-CPP.git amqp-cpp
-WORKDIR amqp-cpp
-RUN cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DAMQP-CPP_BUILD_SHARED=OFF -DAMQP-CPP_LINUX_TCP=ON && \
-    cmake --build build --config Release --target install -j "$(nproc)"
 
-WORKDIR /usr/local/include
-RUN git clone --depth=1 https://github.com/bfgroup/Lyra.git lyra
+# Create virtualenv for Python and activate it
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
+# Install Conan inside virtualenv
+RUN pip install --upgrade pip && pip install conan
+
+# Copy custom Conan profile
+COPY conan/profiles/linux-gcc-x86_64 /root/.conan2/profiles/linux-gcc-x86_64
+
+# Set workdir
 WORKDIR /app
+
+# Copy entire project including CMakePresets and conanfile
 COPY . .
-RUN cmake -B build -S . -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build build --config Release --parallel "$(nproc)"
 
-FROM alpine:3.21.3
+# Install dependencies with Conan
+RUN conan install . \
+    --profile:host=linux-gcc-x86_64 \
+    --profile:build=linux-gcc-x86_64 \
+    --build=missing
 
-RUN apk add --no-cache \
-    boost-system \
-    boost-thread \
-    openssl \
-    libstdc++
+# Build the application with Ninja
+RUN conan build .
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
+# Final stage: runtime image
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y \
+    libstdc++6 \
+    libssl3 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN addgroup --system aspion_group && adduser --system --ingroup aspion_group aspion_user
+USER aspion_user
 
 WORKDIR /app
 COPY --from=builder /app/build/Server /app/Server
 
 ENTRYPOINT ["/app/Server"]
-CMD ["-t", "20"]

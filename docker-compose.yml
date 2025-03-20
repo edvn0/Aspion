@@ -1,13 +1,28 @@
 services:
-  server:
+  aspion:
     build: .
-    container_name: cpp_server
+    container_name: aspion
     expose:
       - "8080"
     restart: always
     networks:
-      - internal_net
-    entrypoint: ["/app/Server", "--connection-string=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/"]
+      - aspion_net
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: service.name=aspion
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+    entrypoint:
+      [
+        "/app/Server",
+        "-c",
+        "amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/",
+        "-t",
+        "20"
+      ]
+    depends_on:
+      - rabbitmq
+      - otel-collector
 
   rabbitmq:
     image: rabbitmq:3.11-management
@@ -19,22 +34,50 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
     networks:
-      - internal_net
+      - aspion_net
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   nginx:
     image: nginx:latest
     container_name: nginx_proxy
     depends_on:
-      - server
+      - aspion
     volumes:
       - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "80:80"
     restart: always
     networks:
-      - internal_net
+      - aspion_net
+
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: otel_collector
+    volumes:
+      - ./otel-config.yaml:/etc/otel/config.yaml
+    command: ["--config=/etc/otel/config.yaml"]
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    networks:
+      - aspion_net
+    depends_on:
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.51
+    container_name: jaeger
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+      - "4317:4317"
+    networks:
+      - aspion_net
 
 networks:
-  internal_net:
+  aspion_net:
     driver: bridge
-

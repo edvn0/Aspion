@@ -5,5 +5,5 @@ class Router;
 }
 
 namespace Messaging {
-    class IBusClient;
+class IBusClient;
 }
