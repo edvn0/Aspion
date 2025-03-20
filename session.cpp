@@ -28,6 +28,23 @@ auto HttpSession::process_request() -> void {
 
   http_response.prepare_payload();
 
+  const auto trace_id = Util::generate_uuid();
+  const auto span_id = Util::generate_uuid();
+
+  http_request.set("X-Trace-ID", trace_id);
+  http_response.set("X-Trace-ID", trace_id);
+
+  // Publish request/response to RabbitMQ
+  Messaging::Message message {
+    .exchange = "logs_exchange",
+    .routing_key = "logs.routing.key",
+    .serialised_request = http_request.body(),
+    .serialised_response = http_response.body(),
+    .trace_id = trace_id,
+    .span_id =span_id,
+  };
+  client.publish(message);
+
   if (should_use_write_some()) {
     write_response_some();
   } else {

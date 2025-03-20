@@ -23,11 +23,13 @@ int main(int argc, char **argv) {
   std::cout << "Connection string: '{" << rabbitmq_connection_string << "}'\n";
 
   try {
-    boost::asio::io_context global_io_context;
+    boost::asio::io_context rabbit_mq_context;
+
     Messaging::RabbitMQ::Client client{
-        global_io_context,
+        rabbit_mq_context,
         rabbitmq_connection_string,
     };
+    boost::asio::io_context global_io_context;
     boost::asio::ip::tcp::acceptor acceptor(
         global_io_context,
         boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 8080));
@@ -40,6 +42,8 @@ int main(int argc, char **argv) {
     std::cout << out.str() << "\n";
 
     Session::accept_connections(client, acceptor, router);
+    std::jthread rabbit_mq_thread([&] { rabbit_mq_context.run(); });
+    
     std::vector<std::jthread> workers;
     for (int i = 0; i < num_threads; ++i) {
       workers.emplace_back([&io = global_io_context] { io.run(); });

@@ -1,5 +1,10 @@
 #pragma once
 
+#include <string>
+#include <cstdint>
+
+#include <boost/functional/hash.hpp>
+
 namespace Util {
 
 template <typename V> struct TransparentHash {
@@ -10,5 +15,7 @@ template <typename V> struct TransparentHash {
     return hasher(v);
   }
 };
+
+auto generate_uuid() -> std::string;
 
 } // namespace Util
