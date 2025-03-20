@@ -1,0 +1,40 @@
+services:
+  server:
+    build: .
+    container_name: cpp_server
+    expose:
+      - "8080"
+    restart: always
+    networks:
+      - internal_net
+    entrypoint: ["/app/Server", "--connection-string=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/"]
+
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    networks:
+      - internal_net
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    depends_on:
+      - server
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    restart: always
+    networks:
+      - internal_net
+
+networks:
+  internal_net:
+    driver: bridge
+

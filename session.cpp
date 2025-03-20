@@ -1,15 +1,16 @@
 #include "session.hpp"
+#include "rabbit_mq_client.hpp"
 
 namespace Session {
 
-auto accept_connections(tcp::acceptor &acceptor,
+auto accept_connections(Messaging::IBusClient& client, tcp::acceptor &acceptor,
                         Routing::Router &router) -> void {
-  acceptor.async_accept([&acc = acceptor, &route = router](beast::error_code ec,
+  acceptor.async_accept([&c = client, &acc = acceptor, &route = router](beast::error_code ec,
                                                            tcp::socket socket) {
     if (!ec) {
-      std::make_shared<Session::HttpSession>(route, std::move(socket))->start();
+      std::make_shared<Session::HttpSession>(route, c, std::move(socket))->start();
     }
-    accept_connections(acc, route);
+    accept_connections(c, acc, route);
   });
 }
 
