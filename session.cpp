@@ -40,7 +40,7 @@ auto HttpSession::process_request() -> void {
   // Publish request/response to RabbitMQ
   Messaging::Message message{
       .exchange = "logs_exchange",
-      .routing_key = "logs.routing.key",
+      .routing_key = "logs.info",
       .serialised_request = http_request.request.body(),
       .serialised_response = http_response.response.body(),
       .trace_id = trace_id,
