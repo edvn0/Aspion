@@ -9,6 +9,7 @@
 #include <type_traits>
 
 #include "controller_base.hpp"
+#include "middleware.hpp"
 #include "request_response.hpp"
 #include "util.hpp"
 
@@ -20,10 +21,12 @@ class Router {
 public:
   auto add_route(const std::string &path, Core::RouteHandler handler,
                  const std::string &controller_name) {
-    if (assigned_routes.contains(path))
+    if (assigned_routes.contains(path)) {
       throw std::runtime_error(std::format("Path {} already exists.", path));
+    }
 
-    assigned_routes[path] = std::move(handler);
+    auto wrapped_handler = build_pipeline(std::move(handler));
+    assigned_routes[path] = std::move(wrapped_handler);
     route_controllers[path] = controller_name;
   }
 
@@ -46,6 +49,12 @@ public:
         http::string_body>(http::status::not_found, "404 Not Found");
   }
 
+  template <typename Middleware>
+    requires std::is_base_of_v<IMiddleware, Middleware>
+  auto use() -> void {
+    middlewares.emplace_back(std::make_shared<Middleware>());
+  }
+
   auto print_routes() const -> void;
 
 private:
@@ -60,6 +69,20 @@ private:
                      std::unique_ptr<Controller::IController>, TypeIndexHash,
                      std::equal_to<>>
       controllers{};
+  std::vector<std::shared_ptr<Routing::IMiddleware>> middlewares{};
+
+  auto build_pipeline(Core::RouteHandler handler) const -> Core::RouteHandler {
+    auto next = std::move(handler);
+    for (auto it = std::rbegin(middlewares); it != std::rend(middlewares);
+         ++it) {
+      auto &middleware = *it;
+      Core::RouteHandler current = std::move(next);
+      next = [current, middleware](const Core::Request &req) {
+        return middleware->invoke(req, current);
+      };
+    }
+    return next;
+  }
 };
 
 using RegistrationFunction = decltype(+[](Router &) -> void {});

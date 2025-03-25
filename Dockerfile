@@ -45,6 +45,7 @@ RUN apt-get update && apt-get install -y \
     adduser \
     libssl3 \
     libstdc++6 \
+    wget \
     netcat-traditional && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -53,7 +54,8 @@ USER aspion_user
 
 WORKDIR /app
 
-COPY --from=builder /app/build/Release/Server /app/Server
-COPY wait-for-it.sh /app/wait-for-it.sh
+RUN wget https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh && \
+    chmod +x wait-for-it.sh
+COPY --from=builder /app/build/Release/examples/AspionExample /app/Server
 
-ENTRYPOINT ["/app/wait-for-it.sh", "rabbitmq:5672", "--", "/app/Server"]
+ENTRYPOINT ["/wait-for-it.sh", "rabbitmq:5672", "--", "/app/Server"]
