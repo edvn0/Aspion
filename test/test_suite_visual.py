@@ -144,4 +144,3 @@ def visualize_results(latencies, rps, total_success, total_failure):
 
 if __name__ == "__main__":
     main()
-

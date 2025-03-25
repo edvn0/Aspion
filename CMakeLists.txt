@@ -11,9 +11,9 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(opentelemetry-cpp CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 
-add_library(Routing STATIC router.cpp rabbit_mq_client.cpp session.cpp
-    session_read.cpp session_write.cpp util.cpp log.cpp otel_init.cpp)
-add_executable(Server main.cpp)
+add_library(Routing STATIC src/router.cpp src/rabbit_mq_client.cpp src/session.cpp
+    src/session_read.cpp src/session_write.cpp src/util.cpp src/log.cpp src/otel_init.cpp)
+add_executable(Server src/main.cpp)
 target_compile_options(Routing PRIVATE -Wall -Werror -Wextra)
 target_compile_options(Server PRIVATE -Wall -Werror -Wextra)
 

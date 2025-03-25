@@ -28,7 +28,7 @@ public:
   }
 
   template <typename T>
-  requires std::is_base_of_v<Controller::ControllerBase<T>, T>
+    requires std::is_base_of_v<Controller::ControllerBase<T>, T>
   void add_controller() {
     auto controller_name = boost::typeindex::type_id<T>();
     if (controllers.find(controller_name) == std::end(controllers)) {

@@ -23,9 +23,10 @@ public:
 
 protected:
   template <typename Body>
-  static auto
-  create_response(http::status status, const std::string_view content,
-                  std::string content_type = "text/plain") -> Core::Response {
+  static auto create_response(http::status status,
+                              const std::string_view content,
+                              std::string content_type = "text/plain")
+      -> Core::Response {
     http::response<Body> response(status, 11);
     response.set(http::field::content_type, content_type);
     response.body() = content;

@@ -44,8 +44,8 @@ private:
   auto read_request_full() -> void;
   auto read_request_some() -> void;
   auto on_read(beast::error_code ec, std::size_t) -> void;
-  auto on_read_some(beast::error_code ec,
-                    std::size_t bytes_transferred) -> void;
+  auto on_read_some(beast::error_code ec, std::size_t bytes_transferred)
+      -> void;
   auto process_request() -> void;
   auto should_use_write_some() -> bool;
   auto write_response() -> void;

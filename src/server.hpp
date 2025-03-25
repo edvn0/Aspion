@@ -7,8 +7,8 @@
 
 class HomeController : public Controller::ControllerBase<HomeController> {
 public:
-  auto map_routes(Routing::Router &router,
-                  const std::string &controller_name) -> void override {
+  auto map_routes(Routing::Router &router, const std::string &controller_name)
+      -> void override {
     router.add_route(
         "/", [this](const Core::Request &req) { return home(req); },
         controller_name);
