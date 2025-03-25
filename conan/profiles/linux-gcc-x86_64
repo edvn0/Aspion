@@ -7,6 +7,10 @@ compiler.cppstd=23
 compiler.libcxx=libstdc++11
 build_type=Release
 
+[options]
+*:shared=False
+*:fPIC=False
+
 [conf]
 tools.cmake.cmaketoolchain:generator=Ninja
 

@@ -2,6 +2,7 @@ FROM debian:testing AS builder
 
 # Install basic build dependencies
 RUN apt-get update && apt-get install -y \
+    autoconf \
     build-essential \
     cmake \
     ninja-build \
@@ -37,21 +38,23 @@ RUN conan install . \
     --build=missing
 
 # Build the application with Ninja
-RUN conan build .
+RUN conan build . \
+    --profile:host=linux-gcc-x86_64 \
+    --profile:build=linux-gcc-x86_64 \
+    --build=missing
 
-# Final stage: runtime image
-FROM debian:bookworm-slim
+FROM debian:testing AS runtime
 
 RUN apt-get update && apt-get install -y \
     libstdc++6 \
+    adduser \
     libssl3 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
 RUN addgroup --system aspion_group && adduser --system --ingroup aspion_group aspion_user
 USER aspion_user
 
 WORKDIR /app
-COPY --from=builder /app/build/Server /app/Server
+COPY --from=builder /app/build/Release/Server /app/Server
 
 ENTRYPOINT ["/app/Server"]
