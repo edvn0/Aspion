@@ -1,43 +1,39 @@
 FROM debian:testing AS builder
 
-# Install basic build dependencies
 RUN apt-get update && apt-get install -y \
     autoconf \
     build-essential \
+    ccache
     cmake \
-    ninja-build \
     git \
+    libffi-dev \
+    libssl-dev \
+    ninja-build \
     python3 \
     python3-pip \
     python3-venv \
-    libssl-dev \
-    libffi-dev
 
-
-# Create virtualenv for Python and activate it
 ENV VIRTUAL_ENV=/opt/venv
-RUN python3 -m venv $VIRTUAL_ENV
+RUN python3 -m venv "$VIRTUAL_ENV"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Install Conan inside virtualenv
 RUN pip install --upgrade pip && pip install conan
 
-# Copy custom Conan profile
 COPY conan/profiles/linux-gcc-x86_64 /root/.conan2/profiles/linux-gcc-x86_64
-
-# Set workdir
+COPY conanfile.py CMakeLists.txt /app/
 WORKDIR /app
 
-# Copy entire project including CMakePresets and conanfile
-COPY . .
+ENV CC="ccache gcc"
+ENV CXX="ccache g++"
+ENV CMAKE_BUILD_PARALLEL_LEVEL=6
 
-# Install dependencies with Conan
 RUN conan install . \
     --profile:host=linux-gcc-x86_64 \
     --profile:build=linux-gcc-x86_64 \
     --build=missing
 
-# Build the application with Ninja
+COPY . .
+
 RUN conan build . \
     --profile:host=linux-gcc-x86_64 \
     --profile:build=linux-gcc-x86_64 \
@@ -46,15 +42,18 @@ RUN conan build . \
 FROM debian:testing AS runtime
 
 RUN apt-get update && apt-get install -y \
-    libstdc++6 \
     adduser \
     libssl3 && \
+    libstdc++6 \
+    netcat-traditional \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN addgroup --system aspion_group && adduser --system --ingroup aspion_group aspion_user
 USER aspion_user
 
 WORKDIR /app
-COPY --from=builder /app/build/Release/Server /app/Server
 
-ENTRYPOINT ["/app/Server"]
+COPY --from=builder /app/build/Release/Server /app/Server
+COPY wait-for-it.sh /app/wait-for-it.sh
+
+ENTRYPOINT ["/app/wait-for-it.sh", "rabbitmq:5672", "--", "/app/Server"]

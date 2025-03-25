@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
                  "Service name for traces");
 
   if (auto result = cli.parse({argc, argv}); !result) {
-    std::cerr << "Error: " << result.message() << "\n";
+    Log::error("Error in command line: {}", result.message());
     return 1;
   }
 
@@ -29,6 +29,12 @@ int main(int argc, char **argv) {
                          std::thread::hardware_concurrency());
 
   Log::info("Connection string: '{}'", rabbitmq_connection_string);
+
+  // Make sure otlp_endpoint is not http:// or other prefixed
+  if (otlp_endpoint.find("http://") == 0) {
+    Log::error("OTLP endpoint should not contain http:// prefix");
+    return 1;
+  }
 
   auto tracer = init_otel_tracer(otlp_endpoint, service_name);
 
@@ -51,11 +57,7 @@ int main(int argc, char **argv) {
     Routing::Router router;
     router.add_controller<HomeController>();
 
-    {
-      std::stringstream out;
-      router.print_routes(out);
-      Log::info("{}", out.str());
-    }
+    router.print_routes();
 
     Session::accept_connections(*client, acceptor, router);
 

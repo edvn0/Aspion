@@ -7,18 +7,20 @@ services:
     restart: always
     networks:
       - aspion_net
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      OTEL_RESOURCE_ATTRIBUTES: service.name=aspion
-      OTEL_TRACES_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: none
+    volumes:
+      - conan_cache:/root/.conan2
+      - ccache:/root/.ccache
     entrypoint:
       [
         "/app/Server",
         "-c",
         "amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/",
         "-t",
-        "20"
+        "20",
+        "--otel-endpoint",
+        "otel-collector:4317",
+        "--service-name",
+        "aspion",
       ]
     depends_on:
       - rabbitmq
@@ -55,11 +57,11 @@ services:
       - aspion_net
 
   otel-collector:
-    image: otel/opentelemetry-collector:latest
+    image: otel/opentelemetry-collector-contrib:latest
     container_name: otel_collector
     volumes:
-      - ./otel-config.yaml:/etc/otel/config.yaml
-    command: ["--config=/etc/otel/config.yaml"]
+      - ./otel-config.yml:/etc/otel/config.yml
+    command: ["--config=/etc/otel/config.yml"]
     ports:
       - "4317:4317"
       - "4318:4318"
@@ -72,11 +74,25 @@ services:
     image: jaegertracing/all-in-one:1.51
     container_name: jaeger
     ports:
+      - "6831:6831/udp"
       - "16686:16686"
       - "14268:14268"
+    networks:
+      - aspion_net
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
     networks:
       - aspion_net
 
 networks:
   aspion_net:
     driver: bridge
+
+volumes:
+  conan_cache:
+  ccache:

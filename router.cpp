@@ -1,4 +1,5 @@
 #include "router.hpp"
+#include "log.hpp"
 
 namespace Routing {
 
@@ -6,9 +7,9 @@ void register_controller(Router &router, RegistrationFunction func) {
   func(router);
 }
 
-auto Router::print_routes(std::ostream &out) const -> void {
+auto Router::print_routes() const -> void {
   if (assigned_routes.empty()) {
-    out << "No registered routes.\n";
+    Log::info("No registered routes.");
     return;
   }
 
@@ -22,21 +23,21 @@ auto Router::print_routes(std::ostream &out) const -> void {
                          return controller.size();
                        }));
 
-  out << std::format("\n{:-<{}s}\n", "",
-                     max_path_width + max_controller_width + 10);
-  out << std::format("| {:<{}} | {:<{}} |\n", "Registered Routes",
-                     max_path_width, "Controller", max_controller_width);
-  out << std::format("{:-<{}s}\n", "",
-                     max_path_width + max_controller_width + 10);
+  auto separator =
+      std::format("{:-<{}s}", "", max_path_width + max_controller_width + 10);
+
+  Log::info("\n{}", separator);
+  Log::info("| {:<{}} | {:<{}} |", "Registered Routes", max_path_width,
+            "Controller", max_controller_width);
+  Log::info("{}", separator);
 
   for (const auto &path : assigned_routes | std::views::keys) {
-    auto controller_name = route_controllers.at(path);
-    out << std::format("| {:<{}} | {:<{}} |\n", path, max_path_width,
-                       controller_name, max_controller_width);
+    const auto &controller = route_controllers.at(path);
+    Log::info("| {:<{}} | {:<{}} |", path, max_path_width, controller,
+              max_controller_width);
   }
 
-  out << std::format("{:-<{}s}\n\n", "",
-                     max_path_width + max_controller_width + 10);
+  Log::info("{}", separator);
 }
 
 } // namespace Routing

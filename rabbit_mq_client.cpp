@@ -72,7 +72,7 @@ struct Client::Impl {
       Log::info(std::format("[RabbitMQ] Connected to broker at {}", str));
 
       {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard lock(mutex);
         ready = true;
       }
       cv.notify_all();
@@ -85,7 +85,7 @@ struct Client::Impl {
     Log::info("[RabbitMQ] Connection initialized, waiting for channel to be "
               "ready...");
 
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     cv.wait_for(lock, std::chrono::seconds(10), [this] { return ready; });
 
     Log::info("[RabbitMQ] Constructor completed");
@@ -98,8 +98,8 @@ struct Client::Impl {
 
   auto publish_impl(std::string_view exchange, std::string_view routing_key,
                     std::string_view req, std::string_view res,
-                    std::string_view trace_id,
-                    std::string_view span_id) -> void {
+                    std::string_view trace_id, std::string_view span_id)
+      -> void {
 
     auto span = tracer->StartSpan(
         "rabbitmq.publish",
@@ -130,7 +130,7 @@ struct Client::Impl {
   }
 
   auto shutdown() -> void {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard lock(mutex);
     if (ready) {
       Log::info("[RabbitMQ] Gracefully shutting down");
       io_channel.close();

@@ -3,5 +3,4 @@ services:
     volumes:
       - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - "8080:80" # Expose HTTP locally
-
+      - "8080:80"
