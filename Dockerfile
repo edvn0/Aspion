@@ -3,7 +3,7 @@ FROM debian:testing AS builder
 RUN apt-get update && apt-get install -y \
     autoconf \
     build-essential \
-    ccache
+    ccache \
     cmake \
     git \
     libffi-dev \
@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     ninja-build \
     python3 \
     python3-pip \
-    python3-venv \
+    python3-venv
 
 ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m venv "$VIRTUAL_ENV"
@@ -43,9 +43,9 @@ FROM debian:testing AS runtime
 
 RUN apt-get update && apt-get install -y \
     adduser \
-    libssl3 && \
+    libssl3 \
     libstdc++6 \
-    netcat-traditional \
+    netcat-traditional && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN addgroup --system aspion_group && adduser --system --ingroup aspion_group aspion_user
