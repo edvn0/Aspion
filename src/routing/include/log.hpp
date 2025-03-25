@@ -5,6 +5,8 @@
 
 namespace Log {
 
+auto configure(std::string_view level, std::string_view file_path) -> void;
+
 void info(std::string_view msg);
 void error(std::string_view msg);
 

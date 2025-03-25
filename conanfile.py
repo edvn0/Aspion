@@ -12,18 +12,20 @@ class Aspion(ConanFile):
             "with_otlp_http": True
         }
     }
-    
+
     name = "aspion"
     version = "1.0"
     settings = "os", "compiler", "build_type", "arch"
     build_requires = ["ninja/1.12.1"]
-    
+
     options = {
         "BUILD_TESTS": [True, False, None],
+        "BUILD_EXAMPLES": [True, False, None],
         "WX": [True, False, None],
     }
     default_options = {
         "BUILD_TESTS": True,
+        "BUILD_EXAMPLES": True,
         "WX": True,
     }
 
@@ -41,10 +43,11 @@ class Aspion(ConanFile):
         deps = CMakeDeps(self)
         deps.generate()
         tc = CMakeToolchain(self, generator="Ninja")
-        
+
         tc.cache_variables["CMAKE_COMPILE_WARNING_AS_ERROR"] = "ON" if bool(self.options.WX) else "OFF"
         tc.cache_variables["BUILD_TESTS"] = "ON" if bool(self.options.BUILD_TESTS) else "OFF"
-            
+        tc.cache_variables["BUILD_EXAMPLES"] = "ON" if bool(self.options.BUILD_EXAMPLES) else "OFF"
+
         tc.generate()
 
     def build(self) -> None:

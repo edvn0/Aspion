@@ -1,9 +1,7 @@
 #include "controller_base.hpp"
 #include "request_response.hpp"
 #include "router.hpp"
-#include "session.hpp"
-
-#include <lyra/lyra.hpp>
+#include "server.hpp"
 
 class HomeController : public Controller::ControllerBase<HomeController> {
 public:
@@ -20,14 +18,18 @@ public:
   auto home(const Core::Request &req) -> Core::Response {
     return create_response<boost::beast::http::string_body>(
         boost::beast::http::status::ok,
-        "Welcome to the Home Page! Method: " +
-            std::string(req.request.method_string()));
+        "Welcome! Method: " + std::string(req.request.method_string()));
   }
 
   auto about(const Core::Request &req) -> Core::Response {
     return create_response<boost::beast::http::string_body>(
         boost::beast::http::status::ok,
-        "This is a C++ HTTP server. You requested: " +
-            std::string{req.request.target()});
+        "About: " + std::string{req.request.target()});
   }
 };
+
+int main(int argc, char **argv) {
+  return Aspion::Server::main(argc, argv, [](Routing::Router &router) {
+    router.add_controller<HomeController>();
+  });
+}
