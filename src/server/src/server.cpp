@@ -20,11 +20,13 @@ struct CLIOptions {
   std::string service_name = "aspion";
   std::string log_file_path = "aspion.log";
   std::string log_level = "info";
+  bool show_help = false;
 };
 
 auto parse_cli(int argc, char **argv, CLIOptions &opts) -> bool {
   auto cli =
       lyra::cli_parser() |
+      lyra::help(opts.show_help)["--help"]["-h"]("Show help") |
       lyra::opt(opts.num_threads,
                 "threads")["--threads"]["-t"]("Worker thread count") |
       lyra::opt(opts.rabbitmq_connection_string,
@@ -38,13 +40,18 @@ auto parse_cli(int argc, char **argv, CLIOptions &opts) -> bool {
       lyra::opt(opts.log_level, "log-level")["--log-level"]("Log level") |
       lyra::opt(opts.port, "port")["--port"]["-p"]("Port to listen on");
 
-  if (auto result = cli.parse({argc, argv}); !result) {
+  auto result = cli.parse({argc, argv});
+  if (opts.show_help) {
+    std::cout << cli << std::endl;
+    return false;
+  }
+  if (!result) {
     std::cerr << "Error in command line: " << result.message() << std::endl;
     return false;
   }
 
-  opts.num_threads = std::min(static_cast<std::uint32_t>(opts.num_threads),
-                              std::thread::hardware_concurrency());
+  opts.num_threads =
+      std::min(opts.num_threads, std::thread::hardware_concurrency());
 
   if (opts.otlp_endpoint.find("http://") == 0) {
     std::cerr << "OTLP endpoint should not contain http:// prefix" << std::endl;
@@ -58,8 +65,8 @@ auto parse_cli(int argc, char **argv, CLIOptions &opts) -> bool {
   return true;
 }
 auto run(const CLIOptions &, Routing::Router router) -> int;
-auto main(int argc, char **argv,
-          const std::function<void(Routing::Router &)> &register_routes)
+auto start(int argc, char **argv,
+           const std::function<void(Routing::Router &)> &register_routes)
     -> int {
   CLIOptions opts;
   if (!parse_cli(argc, argv, opts))
@@ -73,7 +80,7 @@ auto main(int argc, char **argv,
 
 auto run(const CLIOptions &options, Routing::Router router) -> int {
   auto &&[num_threads, rabbitmq_connection_string, port, otlp_endpoint,
-          service_name, log_file_path, log_level] = options;
+          service_name, log_file_path, log_level, show_help] = options;
   std::uint32_t count_threads =
       std::min(num_threads, std::thread::hardware_concurrency());
   auto tracer = init_otel_tracer(otlp_endpoint, service_name);

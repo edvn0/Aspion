@@ -5,7 +5,7 @@
 
 #include <boost/functional/hash.hpp>
 
-namespace Util {
+namespace Routing::Util {
 
 template <typename V> struct TransparentHash {
   using is_transparent = void;
@@ -18,4 +18,4 @@ template <typename V> struct TransparentHash {
 
 auto generate_uuid() -> std::string;
 
-} // namespace Util
+} // namespace Routing::Util

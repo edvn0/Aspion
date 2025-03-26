@@ -6,6 +6,6 @@
 
 namespace Aspion::Server {
 struct CLIOptions;
-auto main(int argc, char **argv,
-          std::function<void(Routing::Router &)> route_builder) -> int;
+auto start(int argc, char **argv,
+           const std::function<void(Routing::Router &)> &route_builder) -> int;
 } // namespace Aspion::Server

@@ -2,6 +2,7 @@
 
 #include <boost/beast/http.hpp>
 
+#include "path_parameter_parser.hpp"
 #include "util.hpp"
 
 namespace Core {
@@ -10,7 +11,8 @@ class Request {
 private:
   using Req = boost::beast::http::request<boost::beast::http::string_body>;
   std::unordered_map<std::string, std::string,
-                     Util::TransparentHash<std::string_view>, std::equal_to<>>
+                     Routing::Util::TransparentHash<std::string_view>,
+                     std::equal_to<>>
       path_params;
 
 public:
@@ -34,6 +36,15 @@ public:
       -> std::optional<std::string_view> {
     if (path_params.contains(name)) {
       return path_params.find(name)->second;
+    }
+    return std::nullopt;
+  }
+
+  template <class T>
+  auto get_path_param(const std::string_view name) const -> std::optional<T> {
+    if (path_params.contains(name)) {
+      static Routing::Util::PathParameterParser<T> parser;
+      return parser.parse(path_params.find(name)->second);
     }
     return std::nullopt;
   }

@@ -37,8 +37,8 @@ COPY . .
 RUN conan build . \
     --profile:host=linux-gcc-x86_64 \
     --profile:build=linux-gcc-x86_64 \
-    --option "aspion/*:BUILD_EXAMPLES=False" \
-    --option "aspion/*:BUILD_TESTS=False" \
+    -o "aspion/*:BUILD_EXAMPLES=False" \
+    -o "aspion/*:BUILD_TESTS=False" \
     --build=missing
 
 FROM debian:testing AS runtime

@@ -13,11 +13,8 @@ public:
       http::response<http::string_body> response{http::status::unauthorized,
                                                  request.request.version()};
       response.set(http::field::content_type, "application/json");
-      response.body() = R"({"error": "Unauthorized"})";
+      response.body() = Routing::json({{"error", "Unauthorized"}});
       response.prepare_payload();
-
-      auto json_data = Routing::json({{"error", "Unauthorized"}});
-
       return response;
     }
 
@@ -57,10 +54,35 @@ public:
     obj["target"] = std::string(req.request.target());
     return ok(obj);
   }
+
+  // Parse /users/{id} route
+  auto user(const Core::Request &req) const -> Core::Response {
+    auto id = req.get_path_param<std::uint32_t>("id");
+    if (!id) {
+      return not_found("User not found");
+    }
+
+    static std::unordered_map<std::uint32_t, std::string> users = {
+        {1, "Alice"}, {2, "Bob"}, {3, "Charlie"}};
+
+    if (users.contains(*id)) {
+      return not_found("User not found");
+    }
+
+    using namespace std::string_view_literals;
+
+    Core::Response response;
+    response.response.result(boost::beast::http::status::ok);
+    response.response.set(boost::beast::http::field::content_type,
+                          "application/json");
+    response.response.body() = Routing::json(Routing::JSONInput{});
+    response.response.prepare_payload();
+    return response;
+  }
 };
 
 int main(int argc, char **argv) {
-  return Aspion::Server::main(argc, argv, [](Routing::Router &router) {
+  return Aspion::Server::start(argc, argv, [](Routing::Router &router) {
     router.use<AuthMiddleware>();
     router.add_controller<HomeController>();
   });

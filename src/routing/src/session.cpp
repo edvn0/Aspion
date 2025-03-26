@@ -31,8 +31,8 @@ auto HttpSession::process_request() -> void {
 
   http_response.response.prepare_payload();
 
-  const auto trace_id = Util::generate_uuid();
-  const auto span_id = Util::generate_uuid();
+  const auto trace_id = Routing::Util::generate_uuid();
+  const auto span_id = Routing::Util::generate_uuid();
 
   http_request.request.set("X-Trace-ID", trace_id);
   http_response.response.set("X-Trace-ID", trace_id);

@@ -61,7 +61,7 @@ public:
 };
 
 int main(int argc, char **argv) {
-  return Aspion::Server::main(argc, argv, [](Routing::Router &router) {
+  return Aspion::Server::start(argc, argv, [](Routing::Router &router) {
     router.use<AuthMiddleware>();
     router.add_controller<HomeController>();
   });
