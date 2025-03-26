@@ -19,15 +19,13 @@ namespace http = boost::beast::http;
 
 class Router {
 public:
-  auto add_route(const std::string &path, Core::RouteHandler handler,
-                 const std::string &controller_name) {
+  auto add_route(const std::string &path, Core::RouteHandler handler) {
     if (assigned_routes.contains(path)) {
       throw std::runtime_error(std::format("Path {} already exists.", path));
     }
 
     auto wrapped_handler = build_pipeline(std::move(handler));
     assigned_routes[path] = std::move(wrapped_handler);
-    route_controllers[path] = controller_name;
   }
 
   template <typename T>
@@ -36,7 +34,7 @@ public:
     auto controller_name = boost::typeindex::type_id<T>();
     if (controllers.find(controller_name) == std::end(controllers)) {
       auto controller = std::make_unique<T>();
-      controller->map_routes(*this, controller_name.pretty_name());
+      controller->map_routes(*this);
       controllers[controller_name] = std::move(controller);
     }
   }
@@ -63,8 +61,6 @@ private:
   std::unordered_map<std::string, Core::RouteHandler, StringHash,
                      std::equal_to<>>
       assigned_routes{};
-  std::unordered_map<std::string, std::string, StringHash, std::equal_to<>>
-      route_controllers{};
   std::unordered_map<boost::typeindex::type_index,
                      std::unique_ptr<Controller::IController>, TypeIndexHash,
                      std::equal_to<>>

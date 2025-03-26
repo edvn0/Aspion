@@ -54,8 +54,8 @@ USER aspion_user
 
 WORKDIR /app
 
-RUN wget https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh && \
-    chmod +x wait-for-it.sh
 COPY --from=builder /app/build/Release/examples/AspionExample /app/Server
+COPY 3pl/wait-for-it.sh /app/wait-for-it.sh
+RUN chmod +x /app/wait-for-it.sh
 
-ENTRYPOINT ["/wait-for-it.sh", "rabbitmq:5672", "--", "/app/Server"]
+ENTRYPOINT ["/app/wait-for-it.sh", "rabbitmq:5672", "--", "/app/Server"]

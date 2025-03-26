@@ -38,6 +38,10 @@ public:
     return std::nullopt;
   }
 
+  auto has(const boost::beast::http::field field) const -> bool {
+    return request.find(field) != request.end();
+  }
+
   auto get_path_params() const -> const auto & { return path_params; }
 };
 

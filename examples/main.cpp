@@ -1,4 +1,5 @@
 #include "controller_base.hpp"
+#include "json.hpp"
 #include "request_response.hpp"
 #include "router.hpp"
 #include "server.hpp"
@@ -15,6 +16,9 @@ public:
       response.set(http::field::content_type, "application/json");
       response.body() = R"({"error": "Unauthorized"})";
       response.prepare_payload();
+
+      auto json_data = Routing::json({{"error", "Unauthorized"}});
+
       return response;
     }
 
@@ -23,8 +27,7 @@ public:
 
 private:
   auto is_authenticated(const Core::Request &req) const -> bool {
-    if (auto it = req.request.find(boost::beast::http::field::authorization);
-        it == req.request.end()) {
+    if (!req.has(boost::beast::http::field::authorization)) {
       return false;
     }
 
@@ -35,24 +38,21 @@ private:
 
 class HomeController : public Controller::ControllerBase<HomeController> {
 public:
-  auto map_routes(Routing::Router &router, const std::string &controller_name)
-      -> void override {
-    router.add_route(
-        "/", [this](const Core::Request &req) { return home(req); },
-        controller_name);
-    router.add_route(
-        "/about", [this](const Core::Request &req) { return about(req); },
-        controller_name);
+  auto map_routes(Routing::Router &router) -> void override {
+    router.add_route("/",
+                     [this](const Core::Request &req) { return home(req); });
+    router.add_route("/about",
+                     [this](const Core::Request &req) { return about(req); });
   }
 
-  auto home(const Core::Request &req) -> Core::Response {
+  auto home(const Core::Request &req) const -> Core::Response {
     boost::json::object obj;
     obj["message"] = "Welcome!";
     obj["method"] = std::string(req.request.method_string());
     return ok(obj);
   }
 
-  auto about(const Core::Request &req) -> Core::Response {
+  auto about(const Core::Request &req) const -> Core::Response {
     boost::json::object obj;
     obj["info"] = "About endpoint";
     obj["target"] = std::string(req.request.target());

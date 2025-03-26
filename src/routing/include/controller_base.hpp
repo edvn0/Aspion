@@ -11,7 +11,7 @@ namespace Controller {
 class IController {
 public:
   virtual ~IController() = default;
-  virtual void map_routes(Routing::Router &, const std::string &) = 0;
+  virtual void map_routes(Routing::Router &) = 0;
 };
 
 namespace http = boost::beast::http;
@@ -20,7 +20,7 @@ template <typename Derived> class ControllerBase : public IController {
 public:
   ~ControllerBase() override = default;
 
-  void map_routes(Routing::Router &, const std::string &) override = 0;
+  void map_routes(Routing::Router &) override = 0;
 
 private:
   template <typename Body>

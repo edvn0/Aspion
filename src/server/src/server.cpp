@@ -15,6 +15,7 @@ namespace Aspion::Server {
 struct CLIOptions {
   std::uint32_t num_threads = 4;
   std::string rabbitmq_connection_string;
+  std::uint32_t port = 8080;
   std::string otlp_endpoint = "http://localhost:4317";
   std::string service_name = "aspion";
   std::string log_file_path = "aspion.log";
@@ -33,7 +34,9 @@ auto parse_cli(int argc, char **argv, CLIOptions &opts) -> bool {
                 "otel-endpoint")["--otel-endpoint"]("OTLP gRPC endpoint") |
       lyra::opt(opts.service_name,
                 "service-name")["--service-name"]("Service name for traces") |
-      lyra::opt(opts.log_file_path, "log-file")["--log-file"]("Log file path");
+      lyra::opt(opts.log_file_path, "log-file")["--log-file"]("Log file path") |
+      lyra::opt(opts.log_level, "log-level")["--log-level"]("Log level") |
+      lyra::opt(opts.port, "port")["--port"]["-p"]("Port to listen on");
 
   if (auto result = cli.parse({argc, argv}); !result) {
     std::cerr << "Error in command line: " << result.message() << std::endl;
@@ -44,7 +47,6 @@ auto parse_cli(int argc, char **argv, CLIOptions &opts) -> bool {
                               std::thread::hardware_concurrency());
 
   if (opts.otlp_endpoint.find("http://") == 0) {
-    // std::print("OTLP endpoint should not contain http:// prefix");
     std::cerr << "OTLP endpoint should not contain http:// prefix" << std::endl;
     return false;
   }
@@ -69,8 +71,8 @@ auto main(int argc, char **argv,
 }
 
 auto run(const CLIOptions &options, Routing::Router router) -> int {
-  auto &&[num_threads, rabbitmq_connection_string, otlp_endpoint, service_name,
-          log_file_path, log_level] = options;
+  auto &&[num_threads, rabbitmq_connection_string, port, otlp_endpoint,
+          service_name, log_file_path, log_level] = options;
   std::uint32_t count_threads =
       std::min(static_cast<std::uint32_t>(num_threads),
                std::thread::hardware_concurrency());
@@ -88,7 +90,7 @@ auto run(const CLIOptions &options, Routing::Router router) -> int {
     boost::asio::io_context global_io_context;
     boost::asio::ip::tcp::acceptor acceptor(
         global_io_context,
-        boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 8080));
+        boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port));
 
     router.print_routes();
     Session::accept_connections(*client, acceptor, router);
