@@ -20,7 +20,6 @@ public:
 
   template <class... Args>
   Request(Args &&...args) : request(std::forward<Args>(args)...) {}
-
   Request(const Req &req) : request(req) {}
 
   template <class H, class C>

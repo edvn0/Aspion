@@ -56,7 +56,7 @@ USER aspion_user
 
 WORKDIR /app
 
-COPY --from=builder /app/build/Release/apps/aspion/Aspion /app/Aspion
+COPY --from=builder /app/build/Release/apps/Aspion/Aspion /app/Aspion
 COPY 3pl/wait-for-it.sh /app/wait-for-it.sh
 RUN chmod +x /app/wait-for-it.sh
 

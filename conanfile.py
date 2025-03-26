@@ -35,6 +35,8 @@ class Aspion(ConanFile):
         self.requires("lyra/1.6.1")
         self.requires("spdlog/1.15.1", options=self.dependency_options["spdlog"])
         self.requires("opentelemetry-cpp/1.18.0", options=self.dependency_options["opentelemetry"])
+        if self.options.BUILD_TESTS:
+            self.requires("doctest/2.4.11")
 
     def layout(self) -> None:
         cmake_layout(self)
