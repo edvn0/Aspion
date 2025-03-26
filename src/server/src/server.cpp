@@ -15,7 +15,7 @@ namespace Aspion::Server {
 struct CLIOptions {
   std::uint32_t num_threads = 4;
   std::string rabbitmq_connection_string;
-  std::uint32_t port = 8080;
+  std::uint16_t port = 8080;
   std::string otlp_endpoint = "http://localhost:4317";
   std::string service_name = "aspion";
   std::string log_file_path = "aspion.log";
@@ -59,7 +59,8 @@ auto parse_cli(int argc, char **argv, CLIOptions &opts) -> bool {
 }
 auto run(const CLIOptions &, Routing::Router router) -> int;
 auto main(int argc, char **argv,
-          std::function<void(Routing::Router &)> register_routes) -> int {
+          const std::function<void(Routing::Router &)> &register_routes)
+    -> int {
   CLIOptions opts;
   if (!parse_cli(argc, argv, opts))
     return 1;
@@ -74,8 +75,7 @@ auto run(const CLIOptions &options, Routing::Router router) -> int {
   auto &&[num_threads, rabbitmq_connection_string, port, otlp_endpoint,
           service_name, log_file_path, log_level] = options;
   std::uint32_t count_threads =
-      std::min(static_cast<std::uint32_t>(num_threads),
-               std::thread::hardware_concurrency());
+      std::min(num_threads, std::thread::hardware_concurrency());
   auto tracer = init_otel_tracer(otlp_endpoint, service_name);
 
   boost::asio::io_context rabbit_mq_context;

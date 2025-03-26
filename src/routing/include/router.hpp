@@ -81,7 +81,7 @@ private:
   }
 };
 
-using RegistrationFunction = decltype(+[](Router &) -> void {});
+using RegistrationFunction = decltype(+[](Router &) {});
 void register_controller(Router &, RegistrationFunction);
 
 } // namespace Routing

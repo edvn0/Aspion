@@ -14,6 +14,8 @@ find_package(gRPC CONFIG REQUIRED)
 add_subdirectory(src/routing)
 add_subdirectory(src/server)
 
+add_subdirectory(apps)
+
 if (BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()

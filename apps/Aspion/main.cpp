@@ -6,8 +6,7 @@
 
 class AuthMiddleware : public Routing::IMiddleware {
 public:
-  auto invoke(const Core::Request &request,
-              const std::function<Core::Response(const Core::Request &)> &next)
+  auto invoke(const Core::Request &request, const Routing::Middleware &next)
       -> Core::Response override {
     if (!is_authenticated(request)) {
       using namespace boost::beast;

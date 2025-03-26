@@ -37,6 +37,8 @@ COPY . .
 RUN conan build . \
     --profile:host=linux-gcc-x86_64 \
     --profile:build=linux-gcc-x86_64 \
+    --option "aspion/*:BUILD_EXAMPLES=False" \
+    --option "aspion/*:BUILD_TESTS=False" \
     --build=missing
 
 FROM debian:testing AS runtime
@@ -54,8 +56,8 @@ USER aspion_user
 
 WORKDIR /app
 
-COPY --from=builder /app/build/Release/examples/AspionExample /app/Server
+COPY --from=builder /app/build/Release/apps/aspion/Aspion /app/Aspion
 COPY 3pl/wait-for-it.sh /app/wait-for-it.sh
 RUN chmod +x /app/wait-for-it.sh
 
-ENTRYPOINT ["/app/wait-for-it.sh", "rabbitmq:5672", "--", "/app/Server"]
+ENTRYPOINT ["/app/wait-for-it.sh", "rabbitmq:5672", "--", "/app/Aspion"]

@@ -10,18 +10,16 @@ services:
     volumes:
       - conan_cache:/root/.conan2
       - ccache:/root/.ccache
-    entrypoint:
-      [
-        "/app/Server",
-        "-c",
-        "amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/",
-        "-t",
-        "20",
-        "--otel-endpoint",
-        "otel-collector:4317",
-        "--service-name",
-        "aspion",
-      ]
+    command: [
+      "-c",
+      "amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/",
+      "-t",
+      "20",
+      "--otel-endpoint",
+      "otel-collector:4317",
+      "--service-name",
+      "aspion"
+    ]
     depends_on:
       - rabbitmq
       - otel-collector
