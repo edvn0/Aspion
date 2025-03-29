@@ -56,8 +56,7 @@ USER aspion_user
 
 WORKDIR /app
 
-COPY --from=builder /app/build/Release/apps/Aspion/Aspion /app/Aspion
-COPY 3pl/wait-for-it.sh /app/wait-for-it.sh
-RUN chmod +x /app/wait-for-it.sh
+COPY --from=builder /app/build/Release/apps/Aspion/Aspion /Aspion
+COPY ./3pl/wait-for-it.sh /wait-for-it.sh
 
-ENTRYPOINT ["/app/wait-for-it.sh", "rabbitmq:5672", "--", "/app/Aspion"]
+ENTRYPOINT ["/wait-for-it.sh", "rabbitmq:5672", "--", "/Aspion"]
